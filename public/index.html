@@ -9,7 +9,6 @@
 <body style="background-color: #56565b">
     <video id="cameraFeed" autoplay ></video>
     <canvas id="canvasOne" class="myCanvas" width="310" height="250"></canvas>
-    <canvas id="outputcanvas" class="myCanvas" width="310" height="250"></canvas>
     <br>
     <p id="result" style="width:100px; height:75px;"></p>
     <canvas id="capturedCanvas" style="display: none;"></canvas>
@@ -21,6 +20,7 @@
     <h1 style="color: aliceblue; text-align: center;">宫颈凹陷程度：<label id="ConC"></label></h1>
     <script>
         function getMat(input,input_data){
+            const text_label = document.getElementById('result');
             let canvas = document.getElementById('canvasOne');
             console.log(canvas.width, canvas.height);
             let mask = new cv.Mat(canvas.height, canvas.width, cv.CV_8UC4);
@@ -40,10 +40,17 @@
                 areas.push(cv.contourArea(contours.get(i)));
             }
             let maxIdx = areas.indexOf(Math.max(...areas));
+            console.log("maxIdx:",maxIdx);
             let themask = new cv.Mat.zeros(gray.rows, gray.cols, cv.CV_8UC3);
             let outputcanvas = document.getElementById('outputcanvas');
-            outputcanvas.width = canvas.width;
-            outputcanvas.height = canvas.height;
+            if(outputcanvas == null){
+                outputcanvas = document.createElement('canvas');
+                outputcanvas.id = 'outputcanvas';
+                outputcanvas.width = canvas.width;
+                outputcanvas.height = canvas.height;
+                document.body.insertBefore(outputcanvas,text_label);
+            }
+            console.log(typeof(outputcanvas));
             cv.drawContours(themask, contours,maxIdx, new cv.Scalar(255, 255, 255),-1);
             cv.imshow('outputcanvas', themask);
             
@@ -74,16 +81,22 @@
                 black_areas.push(cv.contourArea(black_contours.get(i)));
             }
             let black_maxIdx = black_areas.indexOf(Math.max(...black_areas));
-            let black_area = new cv.Mat.zeros(gray.rows, gray.cols, cv.CV_8UC3);
-            cv.drawContours(black_area, black_contours,black_maxIdx, new cv.Scalar(255, 255, 255),-1);
             let BA = document.getElementById('BA');
-            BA.innerHTML = cv.contourArea(black_contours.get(black_maxIdx)).toFixed(2);
             let BP = document.getElementById('BP');
-            BP.innerHTML = (cv.contourArea(black_contours.get(black_maxIdx))/cv.contourArea(contours.get(maxIdx))*100).toFixed(2) + '%';
+            let black_area = new cv.Mat.zeros(gray.rows, gray.cols, cv.CV_8UC3);
+            console.log("black_maxIdx:",black_maxIdx);
+            if(black_maxIdx >= 0){
+                cv.drawContours(black_area, black_contours,black_maxIdx, new cv.Scalar(255, 255, 255),-1);
+                BA.innerHTML = cv.contourArea(black_contours.get(black_maxIdx)).toFixed(2);
+                BP.innerHTML = (cv.contourArea(black_contours.get(black_maxIdx))/cv.contourArea(contours.get(maxIdx))*100).toFixed(2) + '%';
+            }else{
+                BA.innerHTML = 0;
+                BP.innerHTML = 0;
+            }
             cv.subtract(mat,black_area,black_area);
             cv.add(origin_img,black_area,black_area)
             cv.imshow('outputcanvas', black_area);
-            
+        
             //Concavity
             let convexHull = new cv.Mat();
             cv.convexHull(contours.get(maxIdx), convexHull, false, true);

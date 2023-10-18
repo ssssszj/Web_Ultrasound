@@ -9,8 +9,8 @@ var classification_model;
 async function setupCamera() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({
-            //video: {facingMode:{ exact: "environment" }}, // 后置摄像头
-            video: {facingMode: "user"}, // 前置摄像头
+            video: {facingMode:{ exact: "environment" }}, // 后置摄像头
+            //video: {facingMode: "user"}, // 前置摄像头
         });
         //console.log(stream.getVideoTracks()[0].getSettings().width,stream.getVideoTracks()[0].getSettings().height);
         cameraFeed.width = stream.getVideoTracks()[0].getSettings().width*0.8;
@@ -112,7 +112,7 @@ async function init() {
 
     var intervalID = setInterval(predict_segment,2000);
     console.log(intervalID);
-    //predict_segment();
+    // predict_segment();
 }
 
 async function predict_segment(){
@@ -133,6 +133,7 @@ async function predict_segment(){
     var h = example.shape[0];
     example = example.expandDims();
 
+    // *-----classification-----*
     console.time('classification');
     let class_prediction = await classification_model.predict(example);
     let class_scores = await class_prediction.data();
@@ -142,16 +143,21 @@ async function predict_segment(){
     console.log(classes[max_score_id]);
     console.timeEnd('classification');
 
-    // if(classes[max_score_id] === "others"){
-    //     let canvas = document.getElementById('canvasOne');
-    //     let ctx = canvas.getContext('2d');
-    //     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    //     return;
-    // }
+    if(classes[max_score_id] === "others"){
+        let canvas = document.getElementById('canvasOne');
+        let ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const outputcanvas = document.getElementById('outputcanvas');
+        if(outputcanvas){
+            outputcanvas.remove();
+        }
+        return;
+    }
 
     console.time('segmentation');
     example = tf.image.resizeNearestNeighbor(example, [256, 256]);
-    //prediction
+
+    // *-----prediction-----*
     let prediction = await model.predict(example);
     prediction = prediction.reshape([128,128,-1])
     prediction = tf.argMax (prediction, -1)
