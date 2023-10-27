@@ -1,25 +1,19 @@
 import * as tf from '@tensorflow/tfjs';
+import * as THREE from 'three';
+const {XRWebGLLayer} = window;
 const cameraFeed = document.getElementById('cameraFeed');
 const capturedCanvas = document.getElementById('capturedCanvas');
 const result = document.getElementById('result');
+
 var model;
 var classification_model;
+
+let camera, scene, renderer, xrSession, videoTexture;
+let xrReferenceSpace;
+
 // cameraFeed.width = 350;
 // cameraFeed.height = 300;
-async function setupCamera() {
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: {facingMode:{ exact: "environment" }}, // 后置摄像头
-            //video: {facingMode: "user"}, // 前置摄像头
-        });
-        //console.log(stream.getVideoTracks()[0].getSettings().width,stream.getVideoTracks()[0].getSettings().height);
-        cameraFeed.width = stream.getVideoTracks()[0].getSettings().width*0.8;
-        cameraFeed.height = stream.getVideoTracks()[0].getSettings().height*0.8;
-        cameraFeed.srcObject = stream;
-    } catch (error) {
-        console.error('Error accessing the camera:', error);
-    }
-}
+
 /*
 //指定图片在canvas上显示
 function showCanvas(dataUrl) {
@@ -103,16 +97,66 @@ function showCanvas2(dataUrl){
 //     });
 // }
 
+
+
 // 初始化
 async function init() {
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera()
+    renderer = new THREE.WebGLRenderer({antialias: true});
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
 
-    await setupCamera();
+    // Setup XR
+    xrSession = await navigator.xr.requestSession('immersive-vr',{
+        requiredFeatures: ['local', 'viewer']
+    });
+
+    // Setup XRLayer
+    const xrLayer = new XRWebGLLayer(xrSession, renderer);
+    renderer.xr.setCompatibleXRDevice(xrLayer);
+
+    // Setup XR Ref Space
+    xrReferenceSpace = await xrSession.requestReferenceSpace('local');
+    const xrViewerSpace = await xrSession.requestReferenceSpace('viewer');
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: {facingMode:{ exact: "environment" }}, // 后置摄像头
+            //video: {facingMode: "user"}, // 前置摄像头
+        });
+        //console.log(stream.getVideoTracks()[0].getSettings().width,stream.getVideoTracks()[0].getSettings().height);
+        cameraFeed.width = stream.getVideoTracks()[0].getSettings().width*0.8;
+        cameraFeed.height = stream.getVideoTracks()[0].getSettings().height*0.8;
+        cameraFeed.srcObject = stream;
+        cameraFeed.play();
+    } catch (error) {
+        console.error('Error accessing the camera:', error);
+    }
+
+    videoTexture = new THREE.VideoTexture(cameraFeed);
+    const geometry = new THREE.PlaneGeometry(1,1);
+    const material = new THREE.MeshBasicMaterial({side: THREE.DoubleSide, map: videoTexture});
+    const plane = new THREE.Mesh(geometry, material);
+    scene.add(plane);
+
+    renderer.setAnimationLoop(render);
+
     model = await tf.loadGraphModel('./segment_model/model.json');
     classification_model = await tf.loadGraphModel('./classification_model/model.json');
 
-    var intervalID = setInterval(predict_segment,2000);
-    console.log(intervalID);
-    // predict_segment();
+    console.log(tf.getBackend());
+    // var intervalID = setInterval(predict_segment,2000);
+    // console.log(intervalID);
+
+}
+
+function render(time,xrFrame){
+    time *= 0.001;
+
+    videoTexture.needsUpdate = true;
+
+    const viwerPose = xrFrame.getViewerPose(xrReferenceSpace);
 }
 
 async function predict_segment(){
