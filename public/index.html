@@ -7,33 +7,57 @@
 </head>
 
 <body style="background-color: #56565b">
-    <video id="cameraFeed"  ></video>
-    <canvas id="canvasOne" class="myCanvas" width="310" height="250"></canvas>
-    <br>
-    <p id="result" style="width:100px; height:75px;"></p>
-    <canvas id="capturedCanvas" style="display: none;"></canvas>
+    <div>
+        <video id="cameraFeed" style="position: absolute; top:0; left:0;", autoplay="true"></video>
+        <canvas id="canvasOne" style="position: absolute; top:0; left:0;"></canvas>
+    </div>
+    <!-- <button id="fullscreen" >Enter Fullscreen</button> -->
 
-    <h1 style="color: aliceblue; text-align: center;">宫颈区域面积：<label id="Area"></label></h1>
-    <h1 style="color: aliceblue; text-align: center;">宫颈区域周长：<label id="Perimeter"></label></h1>
-    <h1 style="color: aliceblue; text-align: center;">黑色区域面积：<label id="BA"></label></h1>
-    <h1 style="color: aliceblue; text-align: center;">黑色区域占比：<label id="BP"></label></h1>
-    <h1 style="color: aliceblue; text-align: center;">宫颈凹陷程度：<label id="ConC"></label></h1>
+    <h1 style="color: aliceblue; text-align: left; transform: rotate(90deg); position:absolute; left:900px;top:1250px; white-space: nowrap;transform-origin: left bottom;">Cervical Area: <label id="Area"></label></h1>
+    <h1 style="color: aliceblue; text-align: left; transform: rotate(90deg); position:absolute; left:850px;top:1250px; white-space: nowrap;transform-origin: left bottom;">Cervical Perimeter: <label id="Perimeter"></label></h1>
+    <h1 style="color: aliceblue; text-align: left; transform: rotate(90deg); position:absolute; left:800px;top:1250px; white-space: nowrap;transform-origin: left bottom;">Dark Area: <label id="Perimeter"></label></h1>
+    <h1 style="color: aliceblue; text-align: left; transform: rotate(90deg); position:absolute; left:750px;top:1250px; white-space: nowrap;transform-origin: left bottom;">Proportion of Dark Area:  <label id="Perimeter"></label></h1>
+    <h1 style="color: aliceblue; text-align: left; transform: rotate(90deg); position:absolute; left:700px;top:1250px; white-space: nowrap;transform-origin: left bottom;">Cervical Concavity Degree: <label id="Perimeter"></label></h1>
+    <h1 style="color: aliceblue; text-align: left; transform: rotate(90deg); position:absolute; left:650px;top:1250px; white-space: nowrap;transform-origin: left bottom;">Cervical Shape: <label id="Perimeter"></label></h1>
+    <h1 style="color: aliceblue; text-align: left; transform: rotate(90deg); position:absolute; left:600px;top:1250px; white-space: nowrap;transform-origin: left bottom;">Villous Membranous: <label id="Perimeter"></label></h1>
+    <h1 style="color: aliceblue; text-align: left; transform: rotate(90deg); position:absolute; left:550px;top:1250px; white-space: nowrap;transform-origin: left bottom;">Assisted Reproductive Technology: <label id="Perimeter"></label></h1>
+    <h1 style="color: aliceblue; text-align: left; transform: rotate(90deg); position:absolute; left:500px;top:1250px; white-space: nowrap;transform-origin: left bottom;">Fasting Blood Glucose: <label id="Perimeter"></label></h1>
+    <h1 style="color: aliceblue; text-align: left; transform: rotate(90deg); position:absolute; left:450px;top:1250px; white-space: nowrap;transform-origin: left bottom;">Blood Urea Nitrogen: <label id="Perimeter"></label></h1>
+    <h1 style="color: aliceblue; text-align: left; transform: rotate(90deg); position:absolute; left:400px;top:1250px; white-space: nowrap;transform-origin: left bottom;">Cervical Fibroid History: <label id="Perimeter"></label></h1>
+    <h1 style="color: aliceblue; text-align: left; transform: rotate(90deg); position:absolute; left:350px;top:1250px; white-space: nowrap;transform-origin: left bottom;">Cervical Adenomyosis History: <label id="Perimeter"></label></h1>
+    <h1 style="color: aliceblue; text-align: left; transform: rotate(90deg); position:absolute; left:300px;top:1250px; white-space: nowrap;transform-origin: left bottom;">Cervical Incompetence: <label id="Perimeter"></label></h1>
+    <h1 style="color: aliceblue; text-align: left; transform: rotate(90deg); position:absolute; left:250px;top:1250px; white-space: nowrap;transform-origin: left bottom;">Inflammation: <label id="Perimeter"></label></h1>
+    <h1 style="color: aliceblue; text-align: left; transform: rotate(90deg); position:absolute; left:200px;top:1250px; white-space: nowrap;transform-origin: left bottom;">Anemia: <label id="Perimeter"></label></h1>
+    <h1 style="color: aliceblue; text-align: left; transform: rotate(90deg); position:absolute; left:150px;top:1250px; white-space: nowrap;transform-origin: left bottom;">Thrombin Time:  <label id="Perimeter"></label></h1>
+    <h1 style="color: aliceblue; text-align: left; transform: rotate(90deg); position:absolute; left:100px;top:1250px; white-space: nowrap;transform-origin: left bottom;">Preterm Birth Probability: <label id="Perimeter"></label></h1>
+
     <script>
-        function getMat(input,input_data){
+        function getMat(input,input_data,tmpcanvas){
             const text_label = document.getElementById('result');
-            let canvas = document.getElementById('canvasOne');
+            let canvas = document.createElement('canvas');
+            canvas.width = input.shape[1];
+            canvas.height = input.shape[0];
+            let ctx = canvas.getContext('2d');
+            ctx.drawImage(tmpcanvas, 0, 0, canvas.width, canvas.height);
+
             console.log(canvas.width, canvas.height);
             let mask = new cv.Mat(canvas.height, canvas.width, cv.CV_8UC4);
-            let ctx = canvas.getContext('2d');
             let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             mask.data.set(imgData.data);
             console.log(mask.rows, mask.cols, mask.channels());
 
+            console.time('get mask');
             //Cervix Mask
+            let input_array = new Uint8Array(input_data);
+            let origin_img = new cv.Mat(input.shape[0],input.shape[1],cv.CV_8UC3);
+            origin_img.data.set(input_array);
             let gray = new cv.Mat();
             cv.cvtColor(mask, gray, cv.COLOR_BGR2GRAY);
             let contours = new cv.MatVector();
             let hierarchy = new cv.Mat();
+            console.timeEnd('get mask');
+
+            console.time('canvasOne');
             cv.findContours(gray, contours, hierarchy, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE);
             let areas = [];
             for(let i = 0; i < contours.size(); ++i){
@@ -41,29 +65,26 @@
             }
             let maxIdx = areas.indexOf(Math.max(...areas));
             console.log("maxIdx:",maxIdx);
+            console.timeEnd('canvasOne');
+
             let themask = new cv.Mat.zeros(gray.rows, gray.cols, cv.CV_8UC3);
-            let outputcanvas = document.getElementById('outputcanvas');
-            if(outputcanvas == null){
-                outputcanvas = document.createElement('canvas');
-                outputcanvas.id = 'outputcanvas';
-                outputcanvas.width = canvas.width;
-                outputcanvas.height = canvas.height;
-                document.body.insertBefore(outputcanvas,text_label);
-            }
-            console.log(typeof(outputcanvas));
+            let canvasOne = document.getElementById('canvasOne');
+            let ctxOne = canvasOne.getContext('2d');
+            cv.drawContours(origin_img, contours,maxIdx, new cv.Scalar(0, 255, 255),3);
             cv.drawContours(themask, contours,maxIdx, new cv.Scalar(255, 255, 255),-1);
-            cv.imshow('outputcanvas', themask);
-            
+            //cv.imshow('canvasOne', origin_img);
+
+
+            /*
             //Area and Perimeter
             let cervix_area = document.getElementById('Area');
             cervix_area.innerHTML = cv.contourArea(contours.get(maxIdx)).toFixed(2);
             let cervix_perimeter = document.getElementById('Perimeter');
             cervix_perimeter.innerHTML = cv.arcLength(contours.get(maxIdx), true).toFixed(2);
-            let input_array = new Uint8Array(input_data);
-
+            */
+            
             //Black Area
-            let origin_img = new cv.Mat(input.shape[0],input.shape[1],cv.CV_8UC3);
-            origin_img.data.set(input_array);
+            console.time('cvtColor+threshold');
             let reverse_mask = new cv.Mat();
             let mat = new cv.Mat(input.shape[0],input.shape[1],cv.CV_8UC3,new cv.Scalar(255,255,255));
             let segment_img = new cv.Mat();
@@ -72,7 +93,9 @@
             let segment_gray = new cv.Mat();
             cv.cvtColor(segment_img, segment_gray, cv.COLOR_BGR2GRAY);
             cv.threshold(segment_gray, segment_gray, 80,255,cv.THRESH_BINARY_INV);
+            console.timeEnd('cvtColor+threshold');
 
+            console.time('findContours');
             black_contours = new cv.MatVector();
             black_hierarchy = new cv.Mat();
             cv.findContours(segment_gray,black_contours, black_hierarchy, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE);
@@ -81,22 +104,32 @@
                 black_areas.push(cv.contourArea(black_contours.get(i)));
             }
             let black_maxIdx = black_areas.indexOf(Math.max(...black_areas));
-            let BA = document.getElementById('BA');
-            let BP = document.getElementById('BP');
+            // let BA = document.getElementById('BA');
+            // let BP = document.getElementById('BP');
             let black_area = new cv.Mat.zeros(gray.rows, gray.cols, cv.CV_8UC3);
             console.log("black_maxIdx:",black_maxIdx);
+            console.timeEnd('findContours');
+
+            console.time('drawContours');
             if(black_maxIdx >= 0){
                 cv.drawContours(black_area, black_contours,black_maxIdx, new cv.Scalar(255, 255, 255),-1);
-                BA.innerHTML = cv.contourArea(black_contours.get(black_maxIdx)).toFixed(2);
-                BP.innerHTML = (cv.contourArea(black_contours.get(black_maxIdx))/cv.contourArea(contours.get(maxIdx))*100).toFixed(2) + '%';
+                //BA.innerHTML = cv.contourArea(black_contours.get(black_maxIdx)).toFixed(2);
+                //BP.innerHTML = (cv.contourArea(black_contours.get(black_maxIdx))/cv.contourArea(contours.get(maxIdx))*100).toFixed(2) + '%';
             }else{
-                BA.innerHTML = 0;
-                BP.innerHTML = 0;
+                //BA.innerHTML = 0;
+                //BP.innerHTML = 0;
             }
-            cv.subtract(mat,black_area,black_area);
+            console.timeEnd('drawContours');
+            //cv.subtract(mat,black_area,black_area);
+
+            console.time('Opaque mask');
             cv.add(origin_img,black_area,black_area)
-            cv.imshow('outputcanvas', black_area);
-        
+            cv.addWeighted(origin_img,0.3,black_area,0.7,0,black_area)
+            console.timeEnd('Opaque mask');
+            console.time('imshow');
+            cv.imshow('canvasOne', black_area);
+            console.timeEnd('imshow');
+            /*
             //Concavity
             let convexHull = new cv.Mat();
             cv.convexHull(contours.get(maxIdx), convexHull, false, true);
@@ -117,6 +150,7 @@
             black_hierarchy.delete();
             black_area.delete();
             convexHull.delete();
+            */
         }
         window.getMat = getMat;
     </script>
