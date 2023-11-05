@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+
+<head>
+    <script src='https://docs.opencv.org/3.3.1/opencv.js' type="text/javascript"></script>
+
+</head>
+
+<body style="background-color: #56565b">
+    <!--<video id="cameraFeed" autoplay></video>-->
+    <!--<canvas id="capturedCanvas1" class="myCanvas" width="310" height="250"></canvas>
+    <canvas id="capturedCanvas2" class="myCanvas" width="310" height="250"></canvas>-->
+    <table>
+        <tr>
+            <td style="width: 15px;"></td>
+            <td>
+                <canvas id="capturedCanvas1" width="300" height="200"></canvas>
+            </td>
+            <td style="width: 80px;"></td>
+            <!-- 设置水平间距 -->
+            <td>
+                <canvas id="capturedCanvas2" width="300" height="200"></canvas>
+            </td>
+            <td style="width: 15px;"></td>
+        </tr>
+    </table>
+
+
+    <canvas id="canvasOne" class="myCanvas" width="310" height="250" style="display: none;"></canvas>
+    <canvas id="outputcanvas" class="myCanvas" width="310" height="250" style="display: none;"></canvas>
+    <br>
+    <p id="result" style="display: none;"></p>
+
+    <table style="width: 100%;">
+        <tr>
+            <td style="width: 33.33%; vertical-align: top;">
+                <h5 style="color: aliceblue; text-align: left;">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspCervical Area: <label id="Area"></label></h5>
+                <h5 style="color: aliceblue; text-align: left;">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspCervical Perimeter: <label id="Perimeter"></label></h5>
+                <h5 style="color: aliceblue; text-align: left;">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspDark Area: <label id="BA"></label></h5>
+                <h5 style="color: aliceblue; text-align: left;">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspProportion of Dark Area: <label id="BP"></label></h5>
+                <h5 style="color: aliceblue; text-align: left;">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspCervical Concavity Degree: <label id="ConC"></label></h5>
+                <h5 style="color: aliceblue; text-align: left;">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspCervical Shape: <label id="Shape"></label></h5>
+            </td>
+            <td style="width: 33.33%; vertical-align: top">
+                <h5 style="color: aliceblue; text-align: left;"> Villous Membranous: 1<label id="VM"></label></h5>
+                <h5 style="color: aliceblue; text-align: left;"> Assisted Reproductive Technology: 1<label id="ART"></label></h5>
+                <h5 style="color: aliceblue; text-align: left;"> Fasting Blood Glucose: 5<label id="GLU"></label></h5>
+                <h5 style="color: aliceblue; text-align: left;"> Blood Urea Nitrogen: 2.8<label id="BUN"></label></h5>
+                <h5 style="color: aliceblue; text-align: left;"> Cervical Fibroid History: 0<label id="CFH"></label></h5>
+                <br>
+                <br>
+                <h2 style="color: aliceblue; text-align: left;"><b>Preterm Birth Probability: 95.37%</b><label id="PBP"></label></h2>
+
+            </td>
+            <td style="width: 33.33%; vertical-align: top;">
+                <h5 style="color: aliceblue; text-align: left;">Cervical Adenomyosis History: 0<label id="CAH"></label></h5>
+                <h5 style="color: aliceblue; text-align: left;">Cervical Incompetence: 0<label id="CI"></label></h5>
+                <!--Inflammation (Neutrophil Percentage/White Blood Cell Levels)-->
+                <h5 style="color: aliceblue; text-align: left;">Inflammation: 7.31<label id="IF"></label></h5>
+                <!--(Hemoglobin/Hematocrit)-->
+                <h5 style="color: aliceblue; text-align: left;">Anemia: 335.89<label id="ANE"></label></h5>
+                <h5 style="color: aliceblue; text-align: left;">Thrombin Time: 13.2<label id="TT"></label></h5>
+                <!--<h5 style="color: rgb(255, 0, 0); text-align: left;"><b>Preterm Birth Probability: </b><label id="PBP"></label></h5>
+                -->
+            </td>
+        </tr>
+    </table>
+
+    <script>
+        // 假设有相应的 Dis 和 outerProduct 函数来计算距离和外积
+        function Dis(point1, point2) {
+            const dx = point1.x - point2.x;
+            const dy = point1.y - point2.y;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        function outerProduct(v1, v2) {
+            return v1.x * v2.y - v1.y * v2.x;
+        }
+
+
+        // 初始化一些变量
+        var finished = 0;
+        var conc_extents = [];
+        var diameters = [];
+        var min_diameters = [];
+
+        function getMat(input, input_data) {
+
+
+
+            let canvas = document.getElementById('canvasOne');
+            let mask = new cv.Mat(canvas.height, canvas.width, cv.CV_8UC4);
+            let ctx = canvas.getContext('2d');
+            let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            mask.data.set(imgData.data);
+            console.log(mask.rows, mask.cols, mask.channels());
+            //338 579 4
+            console.log("mask type:", typeof mask);
+            console.log(mask);
+
+
+            //Cervix Mask
+
+            let gray = new cv.Mat();
+            cv.cvtColor(mask, gray, cv.COLOR_BGR2GRAY);
+            let contours = new cv.MatVector();
+            let hierarchy = new cv.Mat();
+            cv.findContours(gray, contours, hierarchy, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE);
+            let areas = [];
+            for (let i = 0; i < contours.size(); ++i) {
+                areas.push(cv.contourArea(contours.get(i)));
+            }
+            let maxIdx = areas.indexOf(Math.max(...areas));
+            let themask = new cv.Mat.zeros(gray.rows, gray.cols, cv.CV_8UC3);
+
+
+            let canvas2 = document.getElementById('capturedCanvas2');
+            let outputCtx = canvas2.getContext('2d');
+
+
+
+
+            //dark area
+
+            let outputcanvas = document.getElementById('outputcanvas');
+            outputcanvas.width = canvas.width;
+            outputcanvas.height = canvas.height;
+            cv.drawContours(themask, contours, maxIdx, new cv.Scalar(255, 255, 255), -1);
+            cv.imshow('outputcanvas', themask);
+
+            //Area and Perimeter
+            let cervix_area = document.getElementById('Area');
+            cervix_area.innerHTML = cv.contourArea(contours.get(maxIdx)).toFixed(2);
+            let cervix_perimeter = document.getElementById('Perimeter');
+            cervix_perimeter.innerHTML = cv.arcLength(contours.get(maxIdx), true).toFixed(2);
+            let input_array = new Uint8Array(input_data);
+
+            //Black Area
+            let origin_img = new cv.Mat(input.shape[0], input.shape[1], cv.CV_8UC3);
+            origin_img.data.set(input_array);
+            let reverse_mask = new cv.Mat();
+            let mat = new cv.Mat(input.shape[0], input.shape[1], cv.CV_8UC3, new cv.Scalar(255, 255, 255));
+            let segment_img = new cv.Mat();
+            cv.subtract(mat, themask, reverse_mask);
+            cv.add(origin_img, reverse_mask, segment_img);
+            let segment_gray = new cv.Mat();
+            cv.cvtColor(segment_img, segment_gray, cv.COLOR_BGR2GRAY);
+            cv.threshold(segment_gray, segment_gray, 80, 255, cv.THRESH_BINARY_INV);
+
+            black_contours = new cv.MatVector();
+            black_hierarchy = new cv.Mat();
+            cv.findContours(segment_gray, black_contours, black_hierarchy, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE);
+
+
+            let black_areas = [];
+            for (let i = 0; i < black_contours.size(); ++i) {
+                black_areas.push(cv.contourArea(black_contours.get(i)));
+            }
+            let black_maxIdx = black_areas.indexOf(Math.max(...black_areas));
+            let black_area = new cv.Mat.zeros(gray.rows, gray.cols, cv.CV_8UC3);
+            cv.drawContours(black_area, black_contours, black_maxIdx, new cv.Scalar(255, 255, 255), -1);
+            let BA = document.getElementById('BA');
+            BA.innerHTML = cv.contourArea(black_contours.get(black_maxIdx)).toFixed(2);
+            let BP = document.getElementById('BP');
+            BP.innerHTML = (cv.contourArea(black_contours.get(black_maxIdx)) / cv.contourArea(contours.get(maxIdx)) * 100).toFixed(2) + '%';
+            cv.subtract(mat, black_area, black_area);
+            cv.add(origin_img, black_area, black_area)
+            cv.imshow('outputcanvas', black_area);
+
+            //console.log("black contours", typeof black_contours);
+            //console.log("black areas", typeof black_areas);
+            //console.log("black area", black_area);
+
+
+            // 绘制黄色线条
+            outputCtx.strokeStyle = 'yellow';
+            outputCtx.lineWidth = 2; // 设置线条宽度
+            for (let i = 0; i < contours.size(); ++i) {
+                let contour = contours.get(i);
+                outputCtx.beginPath();
+                for (let j = 0; j < contour.data32S.length; j += 2) {
+                    outputCtx.lineTo(contour.data32S[j], contour.data32S[j + 1]);
+                }
+                outputCtx.closePath();
+                outputCtx.stroke();
+            }
+            outputCtx.strokeStyle = 'rgba(128, 128, 128, 0.5)';
+            outputCtx.fillStyle = 'rgba(128, 128, 128, 0.5)'
+            outputCtx.lineWidth = 2; // 设置线条宽度
+            for (let i = 0; i < black_contours.size(); ++i) {
+
+                let contour = black_contours.get(i);
+                outputCtx.beginPath();
+                for (let j = 0; j < contour.data32S.length; j += 2) {
+                    outputCtx.lineTo(contour.data32S[j], contour.data32S[j + 1]);
+                }
+                outputCtx.closePath();
+                // 绘制轮廓内部
+                outputCtx.fill(); // 填充轮廓内部
+                outputCtx.stroke();
+            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            //Concavity
+            let convexHull = new cv.Mat(); //存储凸包的轮廓
+            cv.convexHull(contours.get(maxIdx), convexHull, false, true);
+
+            //计算给定轮廓的凸包，并将结果存储在 convexHull 对象中
+            let hull_area = cv.contourArea(convexHull); //凸包的面积
+            let ConC = document.getElementById('ConC');
+            ConC.innerHTML = ((hull_area - cv.contourArea(contours.get(maxIdx))) / hull_area * 100).toFixed(2) + '%'; //mask和凸包的面积比值
+
+
+            //cervical shape
+
+            // 获取图像数据
+            //const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+            // 创建一个与 mask 具有相同大小的全零三维数组
+            const convhull = new cv.Mat.zeros(mask.rows, mask.cols, cv.CV_32FC3);
+            // 计算 mask 面积与凸包面积的比值
+            //const contours = new cv.MatVector();
+            //const hierarchy = new cv.Mat();
+            //cv.findContours(mask, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+            const maxIdx1 = cv.contourArea(contours.get(0));
+            let hull = convexHull;
+            //cv.convexHull(contours.get(maxIdx1), hull, false, true);
+            let originArea = hull_area;
+            const convhullArea = cv.contourArea(hull);
+            const concExtent = (-originArea + convhullArea);
+
+            // 计算 diameter 和 min_diameter 的值
+            let diameter = 0;
+            let minDiameter = 19260817;
+            hull = hull.data32S;
+            const length = hull.length / 2;
+            let tag = 1;
+
+            for (let i = 0; i < length; i++) {
+                while (outerProduct({
+                        x: hull[tag * 2] - hull[(i + 1) % length * 2],
+                        y: hull[tag * 2 + 1] - hull[(i + 1) % length * 2]
+                    }, {
+                        x: hull[i * 2] - hull[(i + 1) % length * 2],
+                        y: hull[i * 2 + 1] - hull[(i + 1) % length * 2]
+                    }) < outerProduct({
+                        x: hull[(tag + 1) % length * 2] - hull[(i + 1) % length * 2],
+                        y: hull[(tag + 1) % length * 2 + 1] - hull[(i + 1) % length * 2]
+                    }, {
+                        x: hull[i * 2] - hull[(i + 1) % length * 2],
+                        y: hull[i * 2 + 1] - hull[(i + 1) % length * 2]
+                    })) {
+                    tag = (tag + 1) % length;
+                }
+                diameter = Math.max(diameter, Math.max(Dis({
+                    x: hull[tag * 2],
+                    y: hull[tag * 2 + 1]
+                }, {
+                    x: hull[(i + 1) % length * 2],
+                    y: hull[(i + 1) % length * 2 + 1]
+                }), Dis({
+                    x: hull[tag * 2],
+                    y: hull[tag * 2 + 1]
+                }, {
+                    x: hull[i * 2],
+                    y: hull[i * 2 + 1]
+                })));
+                minDiameter = Math.min(minDiameter, Math.min(Dis({
+                    x: hull[tag * 2],
+                    y: hull[tag * 2 + 1]
+                }, {
+                    x: hull[(i + 1) % length * 2],
+                    y: hull[(i + 1) % length * 2 + 1]
+                }), Dis({
+                    x: hull[tag * 2],
+                    y: hull[tag * 2 + 1]
+                }, {
+                    x: hull[i * 2],
+                    y: hull[i * 2 + 1]
+                })));
+            }
+            console.log("maxDist:");
+            console.log(diameter);
+            console.log("minDist:");
+            console.log(minDiameter);
+            // 计算最长和最短点对距离的比值
+            let concavityRatio = diameter / minDiameter;
+
+            // 将结果显示在网页上
+            let CS = document.getElementById('Shape');
+            CS.innerHTML = concavityRatio.toFixed(2);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            mask.delete();
+            gray.delete();
+            contours.delete();
+            hierarchy.delete();
+            themask.delete();
+            origin_img.delete();
+            reverse_mask.delete();
+            mat.delete();
+            segment_img.delete();
+            segment_gray.delete();
+            black_contours.delete();
+            black_hierarchy.delete();
+            black_area.delete();
+            convexHull.delete();
+
+
+
+        }
+        window.getMat = getMat;
+    </script>
+    <script type="text/babel" src="index.js"></script>
+
+
+</body>
+
+</html>
