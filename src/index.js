@@ -8,6 +8,7 @@ let canvas1 = document.getElementById('canvasOne');
 
 var model;
 var classification_model;
+var regression_model;
 
 // 初始化
 async function init() {
@@ -27,11 +28,12 @@ async function init() {
 
     model = await tf.loadGraphModel('./segment_model/model.json');
     classification_model = await tf.loadGraphModel('./classification_model/model.json');
+    regression_model = await tf.loadLayersModel('./reg_model/model.json');
 
     console.log(tf.getBackend());
-    var intervalID = setInterval(predict_segment,2000);
-    console.log(intervalID);
-    // predict_segment();
+    // var intervalID = setInterval(predict_segment,2000);
+    // console.log(intervalID);
+    predict_segment();
 }
 
 
@@ -75,6 +77,7 @@ async function predict_segment(){
     // let max_score_id = class_scores.indexOf(Math.max(...class_scores));
     // let classes = ["others","ultrasound image"];
     // console.log(classes[max_score_id]);
+    // console.log(class_scores);
     // console.timeEnd('classification');
 
     // if(classes[max_score_id] === "others"){
@@ -138,7 +141,22 @@ async function predict_segment(){
     console.timeEnd('segmentation');
 
     // console.time('Feature Extraction');
-    window.getMat(input,input_data,canvas);
+    let input_features = window.getMat(input,input_data,canvas);
+    let input_tensor = tf.tensor2d([input_features]);
+    console.log(input_tensor.shape);
+    // *-----regression-----*
+    //console.time('regression');
+    let regress_prediction = await regression_model.predict(input_tensor);
+    let regress_scores = await regress_prediction.data();
+    let weights = [0.35214043, -0.21649033, 0.046375435, 0.18832417, -2.1727402, -0.20538525, 0.7553606, 1.3897735, 1.723469, 1.1357573, 2.9172645, -0.010626171, 0.12641433, 0.12422553, 0.06690673, 0.36758995, -0.90298194];
+    let prob = weights[16];
+    for(let i=0;i<16;++i){
+        prob += weights[i]*input_features[i];
+    }
+    prob = 1/(1+Math.exp(-prob));
+    console.log(prob);
+    let PTB = document.getElementById('PTB');
+    PTB.innerHTML = (prob*100).toFixed(2)+'%';
     // console.timeEnd('Feature Extraction');
 }
 
