@@ -10,13 +10,19 @@ var model;
 var classification_model;
 var regression_model;
 
+var constraints = { 
+    audio: false, 
+    video: { facingMode: "environment" }  // 后置摄像头
+    // video: {facingMode: "user"}, // 前置摄像头
+};
+cameraFeed.setAttribute('autoplay', '');
+cameraFeed.setAttribute('muted', '');
+cameraFeed.setAttribute('playsinline', '');
+
 // 初始化
 async function init() {
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: {facingMode:{ exact: "environment" }}, // 后置摄像头
-            // video: {facingMode: "user"}, // 前置摄像头
-        });
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
         //console.log(stream.getVideoTracks()[0].getSettings().width,stream.getVideoTracks()[0].getSettings().height);
         cameraFeed.width = stream.getVideoTracks()[0].getSettings().width*2.0;
         cameraFeed.height = stream.getVideoTracks()[0].getSettings().height*2.0;
@@ -25,22 +31,21 @@ async function init() {
         console.error('Error accessing the camera:', error);
     }
 
-
     model = await tf.loadGraphModel('./segment_model/model.json');
     classification_model = await tf.loadGraphModel('./classification_model/model.json');
     regression_model = await tf.loadLayersModel('./reg_model/model.json');
 
-    console.log(tf.getBackend());
-    // var intervalID = setInterval(predict_segment,2000);
+    // console.log(tf.getBackend());
+    // var intervalID = setInterval(predict_segment,10000);
     // console.log(intervalID);
     predict_segment();
 }
 
 
-
 async function predict_segment(){
     let ctx1 = canvas1.getContext('2d');
     //ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+    console.time('per Frame:');
 
     capturedCanvas.width = cameraFeed.height;
     capturedCanvas.height = cameraFeed.width;
@@ -67,7 +72,7 @@ async function predict_segment(){
 
     var width = 128; 
     var height = 128;
-    console.log(example.shape);
+    // console.log(example.shape);
     example = example.expandDims();
 
     // *-----classification-----*
@@ -81,13 +86,7 @@ async function predict_segment(){
     // console.timeEnd('classification');
 
     // if(classes[max_score_id] === "others"){
-    //     let canvas = document.getElementById('canvasOne');
-    //     let ctx = canvas.getContext('2d');
-    //     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    //     const outputcanvas = document.getElementById('outputcanvas');
-    //     if(outputcanvas){
-    //         outputcanvas.remove();
-    //     }
+    //     ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
     //     return;
     // }
 
@@ -133,7 +132,7 @@ async function predict_segment(){
     ctxc.rotate(90*Math.PI/180);
     ctxc.drawImage(tmpcanvas, -tmpcanvas.width/2,-tmpcanvas.height/2, tmpcanvas.width, tmpcanvas.height);
     ctxc.restore();
-    console.log(canvas.width,canvas.height);
+    // console.log(canvas.width,canvas.height);
 
     // canvas1.width = cameraFeed.width;
     // canvas1.height = cameraFeed.height;
@@ -143,7 +142,7 @@ async function predict_segment(){
     // console.time('Feature Extraction');
     let input_features = window.getMat(input,input_data,canvas);
     let input_tensor = tf.tensor2d([input_features]);
-    console.log(input_tensor.shape);
+    console.log(input_features);
     // *-----regression-----*
     //console.time('regression');
     let regress_prediction = await regression_model.predict(input_tensor);
@@ -153,11 +152,13 @@ async function predict_segment(){
     for(let i=0;i<16;++i){
         prob += weights[i]*input_features[i];
     }
-    prob = 1/(1+Math.exp(-prob));
     console.log(prob);
+    prob = 1/(1+Math.exp(-prob));
     let PTB = document.getElementById('PTB');
-    PTB.innerHTML = (prob*100).toFixed(2)+'%';
+    PTB.innerHTML = (regress_scores*100).toFixed(2)+'%';
     // console.timeEnd('Feature Extraction');
+
+    console.timeEnd('per Frame:');
 }
 
 init();

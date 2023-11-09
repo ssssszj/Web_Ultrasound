@@ -40,11 +40,11 @@
             let ctx = canvas.getContext('2d');
             ctx.drawImage(tmpcanvas, 0, 0, canvas.width, canvas.height);
 
-            console.log(canvas.width, canvas.height);
+            // console.log(canvas.width, canvas.height);
             let mask = new cv.Mat(canvas.height, canvas.width, cv.CV_8UC4);
             let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             mask.data.set(imgData.data);
-            console.log(mask.rows, mask.cols, mask.channels());
+            // console.log(mask.rows, mask.cols, mask.channels());
 
             // console.time('get mask');
             //Cervix Mask
@@ -64,7 +64,7 @@
                 areas.push(cv.contourArea(contours.get(i)));
             }
             let maxIdx = areas.indexOf(Math.max(...areas));
-            console.log("maxIdx:",maxIdx);
+            // console.log("maxIdx:",maxIdx);
             // console.timeEnd('canvasOne');
 
             let themask = new cv.Mat.zeros(gray.rows, gray.cols, cv.CV_8UC3);
@@ -103,7 +103,7 @@
             let BA = document.getElementById('BA');
             let BP = document.getElementById('BP');
             let black_area = new cv.Mat.zeros(gray.rows, gray.cols, cv.CV_8UC3);
-            console.log("black_maxIdx:",black_maxIdx);
+            // console.log("black_maxIdx:",black_maxIdx);
             // console.timeEnd('findContours');
 
             // console.time('drawContours');
@@ -154,7 +154,7 @@
             for(let i=0; i<hull_contour.length; i+=2){
                 points.push([hull_contour[i],hull_contour[i+1]]);
             }
-            console.log(points);
+            // console.log(points);
             let tag = 1;
             let diameter = 0;
             let min_diameter = 0x7fffffff;
@@ -170,7 +170,7 @@
                 let dis3 = Dis(points[i],points[(tag+1)%len]);
                 let dis4 = Dis(points[(i+1)%len],points[(tag+1)%len]);
                 min_diameter = Math.min(min_diameter,dis1,dis2,dis3,dis4);
-                console.log("min_d:",min_diameter);
+                // console.log("min_d:",min_diameter);
             }
             let Dia = document.getElementById('Dia');
             Dia.innerHTML = diameter.toFixed(2);
@@ -219,7 +219,7 @@
             let Tt = document.getElementById('Tt');
             Tt.innerHTML = f_Tt;
 
-            return [f_concavity,f_diameter/60,f_min_diameter/60,f_blackarea/4000,f_blackpercent,f_area/4000,f_ART,f_fluff,f_jl,f_xjb,f_Incompetence,f_Anemia,f_Inflammation,f_Tt,f_BUN,f_GLU];
+            return [f_concavity*hull_area/1000,f_diameter/30,f_min_diameter/30,f_blackarea/1000,f_blackpercent,f_area/1000,f_ART,f_fluff,f_jl,f_xjb,f_Incompetence,f_Anemia,f_Inflammation,f_Tt,f_BUN,f_GLU];
 
             mask.delete();
             gray.delete();
