@@ -15,6 +15,7 @@ var constraints = {
     video: { facingMode: "environment" }  // 后置摄像头
     // video: {facingMode: "user"}, // 前置摄像头
 };
+
 cameraFeed.setAttribute('autoplay', '');
 cameraFeed.setAttribute('muted', '');
 cameraFeed.setAttribute('playsinline', '');
