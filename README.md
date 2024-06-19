@@ -1,7 +1,7 @@
 
 # Web-based AI Assistant for Medical Imaging
 
-<img src="./result.jpg" align = "right"  width="500" />
+<img src="./result.jpg" align = "middle"  width="500" />
 
 ## Authors
 
@@ -42,7 +42,7 @@ cd public
 npm run start
 ```
 
-<img src="./result.jpg" align = "right"  width="500" />
+<img src="./result.jpg" align = "middle"  width="500" />
 
 
 ## Train the segment model
