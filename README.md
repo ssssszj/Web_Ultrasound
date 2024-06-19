@@ -1,7 +1,7 @@
 
 # Web-based AI Assistant for Medical Imaging
 
-![alt text](./result.jpg)
+<img src="./result.jpg"  width="400" />
 
 ## Authors
 
@@ -42,7 +42,7 @@ cd public
 npm run start
 ```
 
-![alt text](./result.jpg)
+<img src="./result.jpg"  width="400" />
 
 
 ## Train the segment model
