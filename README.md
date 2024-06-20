@@ -4,11 +4,7 @@
 <img src="./result.jpg" align = "middle"  width="500" />
 </p>
 
-## Authors
 
-Weichen Bi, Yun Ma, Zijian Shao, Jiaqi Du, Yudong Han, Yuan Wei, Lijuan Guo, Tianchen Wu and Shuang Li
-
-Peking University
 
 ### Summary
 
@@ -43,9 +39,6 @@ cd public
 
 npm run start
 ```
-<p align = "center">   
-<img src="./result.jpg" align = "middle"  width="500" />
-</p>
 
 
 ## Train the segment model
