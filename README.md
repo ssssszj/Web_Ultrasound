@@ -20,7 +20,7 @@ Clone the repository:
 
 ```
 git clone https://github.com/ssssszj/Web_Ultrasound.git
-cd Web_Ultrasound-master
+cd Web_Ultrasound-master/Web_Ultrasound
 ```
 
 ## Quickstart: Real-world Scenario Testing
