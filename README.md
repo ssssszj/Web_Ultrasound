@@ -122,13 +122,13 @@ Please ensure that the format of the dataset you provide meets the requirements.
 ##### Train
 
 ```
-python ./Web_Ultrasound-master/public/code/E2EPTB-codes/src/CUnet/train.py --data_path ../your_data_folder --mask_path ../your_mask_folder --annotations_file ../your_annotations_file.csv --num_epochs 500
+python ./Web_Ultrasound-master/Segment_model/E2EPTB-codes/src/CUnet/train.py --data_path ../your_data_folder --mask_path ../your_mask_folder --annotations_file ../your_annotations_file.csv --num_epochs 500
 ```
 
 ##### Test
 
 ```
-python ./Web_Ultrasound-master/public/code/E2EPTB-codes/src/CUnet/test.py --root /your/mnist/data/directory
+python ./Web_Ultrasound-master/Segment_model/E2EPTB-codes/src/CUnet/test.py --root /your/mnist/data/directory
 ```
 
 #### Deeplabv3
@@ -140,7 +140,7 @@ Version requirements:
 ##### Train&Test
 
 ```
-python ./Web_Ultrasound-master/public/code/E2EPTB-codes/src/Deeplabv3/main.py /path/to/dataset_directory /path/to/experiment_directory --epochs 500 --batchsize 4
+python ./Web_Ultrasound-master/Segment_model/E2EPTB-codes/src/Deeplabv3/main.py /path/to/dataset_directory /path/to/experiment_directory --epochs 500 --batchsize 4
 ```
 
 #### FCN
@@ -148,5 +148,5 @@ python ./Web_Ultrasound-master/public/code/E2EPTB-codes/src/Deeplabv3/main.py /p
 ##### Train&Test
 
 ```
-python ./Web_Ultrasound-master/public/code/E2EPTB-codes/src/FCN/main.py /path/to/dataset_directory /path/to/experiment_directory --epochs 500 --batchsize 4
+python ./Web_Ultrasound-master/Segment_model/E2EPTB-codes/src/FCN/main.py /path/to/dataset_directory /path/to/experiment_directory --epochs 500 --batchsize 4
 ```
