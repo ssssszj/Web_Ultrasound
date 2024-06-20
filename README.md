@@ -41,7 +41,7 @@ npm run start
 ```
 
 
-## Train the segment model
+## Train the Segment Model
 
 The trained segmentation model and classification model and regression model are stored in separate folders named segment_model and classification_model and reg_model.
 
