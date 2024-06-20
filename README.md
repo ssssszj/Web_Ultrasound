@@ -150,3 +150,16 @@ python ./Web_Ultrasound-master/Segment_model/E2EPTB-codes/src/Deeplabv3/main.py 
 ```
 python ./Web_Ultrasound-master/Segment_model/E2EPTB-codes/src/FCN/main.py /path/to/dataset_directory /path/to/experiment_directory --epochs 500 --batchsize 4
 ```
+
+
+## Regment Model
+
+The regression analysis of training results is implemented in the `./Web_Ultrasound-master/Reg_model/imgprocess.ipynb` file under the folder. During execution, you need to replace the corresponding file paths with your own.
+
+<p align = "center">    
+<img src="./reg.jpg" align = "left"  width="500" />
+</p>
+
+<p align = "center">    
+<img src="./reg2.jpg" align = "right"  width="500" />
+</p>
