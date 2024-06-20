@@ -29,7 +29,7 @@ We have trained the segmentation model, and you can directly run the browser web
 Please make sure you have successfully installed Node.js.
 
 ```
-cd Web_Ultrasound-master
+cd Web_Ultrasound-master/Web_Ultrasound
 
 npm install
 
