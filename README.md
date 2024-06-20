@@ -156,5 +156,5 @@ python ./Web_Ultrasound-master/Segment_model/E2EPTB-codes/src/FCN/main.py /path/
 
 The regression analysis of training results is implemented in the `./Web_Ultrasound-master/Reg_model/imgprocess.ipynb` file under the folder. During execution, you need to replace the corresponding file paths with your own.
 
-<div align=center>  <img src="./reg.png" width=30%>  <img src="./reg2.png" width=30%></div>
+<div align=center>  <img src="./reg.png" width=45%>  <img src="./reg2.png" width=45%></div>
 
